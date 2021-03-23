@@ -5,7 +5,6 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![star, issue](https://img.shields.io/badge/star%2C%20issue-welcome-brightgreen.svg)](https://github.com/tychxn/jd-assistant)
 
-京东抢购助手（短期内不再更新）
 
 ## 主要功能
 
@@ -28,6 +27,7 @@
   - 查询订单 (可选择只显示未付款订单)
 - 其他
   - 商品预约
+  - 查询预购商品列表
   - 用户信息查询
 
 ## 运行环境
@@ -53,7 +53,7 @@ pip install -r requirements.txt
 
 
 ## 更新记录
-
+- 【2021.03.23】修复请求数据失败bug。
 - 【2020.03.10】修复了一些小问题。
 - 【2020.02.08】修复了查询库存接口响应数据结构变化导致的问题。
 - 【2020.02.06】添加下单成功消息推送功能；新增配置参数以减少各种异常情况。
