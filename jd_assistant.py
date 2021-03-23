@@ -966,6 +966,7 @@ class Assistant(object):
         
         :return: 预购商品列表信息
 
+
         """
         url = 'https://yushou.jd.com/member/qualificationList.action'
         headers = {
