@@ -14,7 +14,7 @@ if __name__ == '__main__':
     asst.login_by_QRcode()  # 扫码登陆
 
     # asst.add_item_to_cart(sku_ids=sku_ids)
-    print(asst.get_preorder_list())
+    print(asst.get_yugou_list())
 
     # asst.exec_reserve_seckill_by_time(sku_id=sku_ids, buy_time='2021-03-22 11:18:59.99800', retry=4, interval=5)
     # asst.submit_order_by_time(buy_time='2021-03-17 16:00:00.000', retry=4, interval=5)  # 定时提交订单

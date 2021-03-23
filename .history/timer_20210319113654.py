@@ -7,7 +7,7 @@ from log import logger
 
 class Timer(object):
 
-    def __init__(self, buy_time, sleep_interval=0.01):
+    def __init__(self, buy_time, sleep_interval=0.1):
 
         # '2018-09-28 22:45:50.000'
         self.buy_time = datetime.strptime(buy_time, "%Y-%m-%d %H:%M:%S.%f")

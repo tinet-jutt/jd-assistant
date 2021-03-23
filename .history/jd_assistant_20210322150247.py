@@ -961,28 +961,24 @@ class Assistant(object):
             return False
 
     @check_login
-    def get_preorder_list(self):
-        """获取预购商品列表信息
-        
-        :return: 预购商品列表信息
-
-        """
-        url = 'https://yushou.jd.com/member/qualificationList.action'
-        headers = {
-            'Referer': 'https://home.jd.com/'
+    def get_yugou_list(self):
+        # ?callback=itemDataCBA&page=1&pagesize=20&sceneval=2&t=0.050366437098111394
+        url = 'https://wq.jd.com/bases/yuyuelist/getitemlist1'
+        payload = {
+            't': 0.050366437098111399,
+            'page': 1,
+            'pagesize': 20,
+            'sceneval': 2,
+            'callback': 'itemDataCBA'
         }
-        resp = self.sess.get(url=url, headers=headers)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        preorder_list = []
-        for item in soup.find_all(class_='cont-box'):
-            try:
-                title = item.find(class_='prod-title').a.text
-                skuid = item.find(class_='prod-price')['id'].split('_')[0]
-                start_time = item.find(id='%s_buystime' % skuid)['value']
-                preorder_list.append({'title': title, 'skuid': skuid, 'start_time': start_time})
-            except Exception as e:
-                logger.error(e)
-        return preorder_list
+        headers = {
+            'referer': 'https://wqs.jd.com/'
+        }
+        try:
+            resp = self.sess.get(url=url, params=payload, headers=headers)
+            print(resp.text)
+        except Exception as e:
+            logger.error(e)
 
     @check_login
     def submit_order_with_retry(self, retry=3, interval=4):

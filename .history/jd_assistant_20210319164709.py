@@ -63,8 +63,6 @@ class Assistant(object):
         self.nick_name = ''
         self.is_login = False
         self.sess = requests.session()
-        self.sess.headers.update(self.headers)
-
         try:
             self._load_cookies()
         except Exception:
@@ -80,6 +78,7 @@ class Assistant(object):
             local_cookies = pickle.load(f)
         self.sess.cookies.update(local_cookies)
         self.is_login = self._validate_cookies()
+        print('self.is_login', self.is_login)
 
     def _save_cookies(self):
         cookies_file = './cookies/{0}.cookies'.format(self.nick_name)
@@ -91,8 +90,7 @@ class Assistant(object):
 
     def _validate_cookies(self):
         """验证cookies是否有效（是否登陆）
-        通过访问用户订单列表页进行判断：若未登录，将会返回
-        <script>window.location.href='https://passport.jd.com/uc/login?ReturnUrl=http%3A%2F%2Forder.jd.com%2Fcenter%2Flist.action'</script>
+        通过访问用户订单列表页进行判断：若未登录，将会返回<script>window.location.href='https://passport.jd.com/uc/login?ReturnUrl=http%3A%2F%2Forder.jd.com%2Fcenter%2Flist.action'</script>。
         :return: cookies是否有效 True/False
         """
         url = 'https://order.jd.com/center/list.action'
@@ -101,7 +99,8 @@ class Assistant(object):
         }
         try:
             resp = self.sess.get(url=url, params=payload, allow_redirects=False)
-            if resp.status_code == requests.codes.OK and not '<script>window.location.href=' in resp.text:
+            print('resp', resp.text)
+            if not 'window.location.href=' in resp.text:
                 return True
         except Exception as e:
             logger.error(e)
@@ -119,7 +118,7 @@ class Assistant(object):
             'version': 2015,
             'r': random.random(),
         }
-        resp = self.sess.post(url, params=payload, data=data)
+        resp = self.sess.post(url, params=payload, data=data, headers=self.headers)
         if not response_status(resp):
             logger.error('获取是否需要验证码失败')
             return False
@@ -139,6 +138,7 @@ class Assistant(object):
             'yys': str(int(time.time() * 1000)),
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://passport.jd.com/uc/login',
         }
         resp = self.sess.get(url, params=payload, headers=headers)
@@ -206,6 +206,7 @@ class Assistant(object):
         data['loginname'] = username
         data['nloginpwd'] = encrypt_pwd(password)
         headers = {
+            'User-Agent': self.user_agent,
             'Origin': 'https://passport.jd.com',
         }
         resp = self.sess.post(url=login_url, data=data, headers=headers, params=payload)
@@ -258,6 +259,7 @@ class Assistant(object):
             't': str(int(time.time() * 1000)),
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://passport.jd.com/new/login.aspx',
         }
         resp = self.sess.get(url=url, headers=headers, params=payload)
@@ -281,6 +283,7 @@ class Assistant(object):
             '_': str(int(time.time() * 1000)),
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://passport.jd.com/new/login.aspx',
         }
         resp = self.sess.get(url=url, headers=headers, params=payload)
@@ -300,6 +303,7 @@ class Assistant(object):
     def _validate_QRcode_ticket(self, ticket):
         url = 'https://passport.jd.com/uc/qrCodeTicketValidation'
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://passport.jd.com/uc/login?ltype=logout',
         }
         resp = self.sess.get(url=url, headers=headers, params={'t': ticket})
@@ -355,6 +359,7 @@ class Assistant(object):
             'sku': sku_id,
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
         resp = self.sess.get(url=url, params=payload, headers=headers)
@@ -374,6 +379,7 @@ class Assistant(object):
             logger.error('%s 非预约商品', sku_id)
             return
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
         resp = self.sess.get(url=reserve_url, headers=headers)
@@ -393,6 +399,7 @@ class Assistant(object):
             '_': str(int(time.time() * 1000)),
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://order.jd.com/center/list.action',
         }
         try:
@@ -447,6 +454,7 @@ class Assistant(object):
             'venderId': vender_id  # return seller information with this param (can't be ignored)
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
 
@@ -484,6 +492,7 @@ class Assistant(object):
 
         url = 'https://trade.jd.com/api/v1/batch/stock'
         headers = {
+            'User-Agent': self.user_agent,
             'Origin': 'https://trade.jd.com',
             'Content-Type': 'application/json; charset=UTF-8',
             'Referer': 'https://trade.jd.com/shopping/order/getOrderInfo.action?rid=' + str(int(time.time() * 1000)),
@@ -626,6 +635,9 @@ class Assistant(object):
         :return:
         """
         url = 'https://cart.jd.com/gate.action'
+        headers = {
+            'User-Agent': self.user_agent,
+        }
 
         for sku_id, count in parse_sku_id(sku_ids=sku_ids).items():
             payload = {
@@ -633,7 +645,7 @@ class Assistant(object):
                 'pcount': count,
                 'ptype': 1,
             }
-            resp = self.sess.get(url=url, params=payload)
+            resp = self.sess.get(url=url, params=payload, headers=headers)
 
             if 'https://cart.jd.com/cart.action' in resp.url:  # 套装商品加入购物车后直接跳转到购物车页面
                 result = True
@@ -752,6 +764,7 @@ class Assistant(object):
             # 'locationId'
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://cart.jd.com/cart',
         }
         resp = self.sess.post(url, data=data, headers=headers)
@@ -792,7 +805,7 @@ class Assistant(object):
         """
         # url = 'http://trade.jd.com/shopping/order/getOrderInfo.action'
         url = 'https://trade.jd.com/shopping/order/getOrderInfo.action'
-        
+        # url = 'https://cart.jd.com/gotoOrder.action'
         payload = {
             'rid': str(int(time.time() * 1000)),
         }
@@ -881,6 +894,7 @@ class Assistant(object):
             "invoiceParam.saveInvoiceFlag": 1
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://trade.jd.com/shopping/dynamic/invoice/saveInvoice.action',
         }
         self.sess.post(url=url, data=data, headers=headers)
@@ -920,6 +934,7 @@ class Assistant(object):
             data['submitOrderParam.payPassword'] = encrypt_payment_pwd(payment_pwd)
 
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'trade.jd.com',
             'Referer': 'http://trade.jd.com/shopping/order/getOrderInfo.action',
         }
@@ -959,30 +974,6 @@ class Assistant(object):
         except Exception as e:
             logger.error(e)
             return False
-
-    @check_login
-    def get_preorder_list(self):
-        """获取预购商品列表信息
-        
-        :return: 预购商品列表信息
-
-        """
-        url = 'https://yushou.jd.com/member/qualificationList.action'
-        headers = {
-            'Referer': 'https://home.jd.com/'
-        }
-        resp = self.sess.get(url=url, headers=headers)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        preorder_list = []
-        for item in soup.find_all(class_='cont-box'):
-            try:
-                title = item.find(class_='prod-title').a.text
-                skuid = item.find(class_='prod-price')['id'].split('_')[0]
-                start_time = item.find(id='%s_buystime' % skuid)['value']
-                preorder_list.append({'title': title, 'skuid': skuid, 'start_time': start_time})
-            except Exception as e:
-                logger.error(e)
-        return preorder_list
 
     @check_login
     def submit_order_with_retry(self, retry=3, interval=4):
@@ -1041,6 +1032,7 @@ class Assistant(object):
             's': 4096,
         }  # Orders for nearly three months
         headers = {
+            'User-Agent': self.user_agent,
             'Referer': 'https://passport.jd.com/uc/login?ltype=logout',
         }
 
@@ -1123,6 +1115,7 @@ class Assistant(object):
             '_': str(int(time.time() * 1000)),
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'itemko.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
@@ -1151,6 +1144,7 @@ class Assistant(object):
         if not self.seckill_url.get(sku_id):
             self.seckill_url[sku_id] = self._get_seckill_url(sku_id)
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
@@ -1170,6 +1164,7 @@ class Assistant(object):
             'rid': int(time.time())
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',
             'Referer': 'https://item.jd.com/{}.html'.format(sku_id),
         }
@@ -1189,6 +1184,7 @@ class Assistant(object):
             'isModifyAddress': 'false',
         }
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',
         }
         resp = self.sess.post(url=url, data=data, headers=headers)
@@ -1263,6 +1259,7 @@ class Assistant(object):
             self.seckill_order_data[sku_id] = self._gen_seckill_order_data(sku_id, num)
 
         headers = {
+            'User-Agent': self.user_agent,
             'Host': 'marathon.jd.com',
             'Referer': 'https://marathon.jd.com/seckill/seckill.action?skuId={0}&num={1}&rid={2}'.format(
                 sku_id, num, int(time.time())),
@@ -1368,13 +1365,14 @@ class Assistant(object):
         :return:
         """
 
+        self.add_item_to_cart(sku_ids={sku_id: num})
+
         t = Timer(buy_time=buy_time)
         t.start()
         #  todo
-        self.add_item_to_cart(sku_ids={sku_id: num})
-        self.get_checkout_page_detail()        
-        if self.submit_order():
-            return 
+        
+        self.get_checkout_page_detail()
+        
 
         for count in range(1, retry + 1):
             logger.info('第[%s/%s]次尝试提交订单', count, retry)

@@ -792,7 +792,7 @@ class Assistant(object):
         """
         # url = 'http://trade.jd.com/shopping/order/getOrderInfo.action'
         url = 'https://trade.jd.com/shopping/order/getOrderInfo.action'
-        
+        # url = 'https://cart.jd.com/gotoOrder.action'
         payload = {
             'rid': str(int(time.time() * 1000)),
         }
@@ -959,30 +959,6 @@ class Assistant(object):
         except Exception as e:
             logger.error(e)
             return False
-
-    @check_login
-    def get_preorder_list(self):
-        """获取预购商品列表信息
-        
-        :return: 预购商品列表信息
-
-        """
-        url = 'https://yushou.jd.com/member/qualificationList.action'
-        headers = {
-            'Referer': 'https://home.jd.com/'
-        }
-        resp = self.sess.get(url=url, headers=headers)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        preorder_list = []
-        for item in soup.find_all(class_='cont-box'):
-            try:
-                title = item.find(class_='prod-title').a.text
-                skuid = item.find(class_='prod-price')['id'].split('_')[0]
-                start_time = item.find(id='%s_buystime' % skuid)['value']
-                preorder_list.append({'title': title, 'skuid': skuid, 'start_time': start_time})
-            except Exception as e:
-                logger.error(e)
-        return preorder_list
 
     @check_login
     def submit_order_with_retry(self, retry=3, interval=4):
@@ -1372,9 +1348,8 @@ class Assistant(object):
         t.start()
         #  todo
         self.add_item_to_cart(sku_ids={sku_id: num})
-        self.get_checkout_page_detail()        
-        if self.submit_order():
-            return 
+        self.get_checkout_page_detail()
+        
 
         for count in range(1, retry + 1):
             logger.info('第[%s/%s]次尝试提交订单', count, retry)
